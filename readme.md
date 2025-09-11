@@ -1,58 +1,110 @@
+# Resumo da Arquitetura
 
-# Projeto de Persistência Poliglota
+- **app.py**: Este é o arquivo principal que inicia a aplicação. Ele importa e executa os componentes da interface do Streamlit.
 
-## Descrição do Projeto
+- **componentes/**: Esta pasta agrupa os diferentes componentes da interface de usuário (Streamlit).
 
-Este projeto tem como objetivo desenvolver uma aplicação de **persistência poliglota** utilizando **SQLite** e **MongoDB** para armazenar e consultar dados em diferentes contextos. A aplicação também implementa recursos de **geoprocessamento** para manipular e visualizar dados espaciais, como latitude e longitude. A interface é construída com **Streamlit**, oferecendo uma experiência interativa e visual.
+- **form_cadastra_cidade.py**: Define o formulário para adicionar novas cidades ao banco de dados SQLite.
 
-## Requisitos e Funcionalidades
+- **form_cadastra_local.py**: Cria o formulário para cadastrar novos locais no banco de dados MongoDB.
 
-### Banco de Dados
+- **proximidade_entre_locais.py**: Implementa a funcionalidade de busca de locais por proximidade, utilizando as coordenadas do MongoDB e a lógica de geoprocessamento.
 
-  * **SQLite**: Usado para armazenar dados tabulares estruturados, como informações de usuários, cidades, estados e países.
-  * **MongoDB**: Usado para armazenar documentos no formato JSON, incluindo coordenadas geográficas (latitude e longitude) e metadados associados
+- **visualiza_mapa.py**: Exibe os locais cadastrados no MongoDB em um mapa usando o Streamlit.
 
-### Geoprocessamento
+- **db_sqlite.py**: Gerencia a conexão e as operações (inserção e busca) no banco de dados SQLite.
 
-  * Cálculo da distância entre dois pontos geográficos
-  * Listagem de locais em um raio de distância a partir de uma coordenada fornecida
-  * Consulta de dados do MongoDB e cruzamento de informações com dados do SQLite
+- **db_mongo.py**: Gerencia a conexão e as operações no banco de dados MongoDB.
 
-### Interface (Streamlit)
+- **geoprocessamento.py**: Contém a função para calcular a distância geográfica entre dois pontos.
 
-A interface interativa permite:
-
-  * Inserir novos dados no SQLite e no MongoDB
-  * Selecionar uma cidade/estado do SQLite e visualizar os pontos de interesse correspondentes do MongoDB
-  * Visualizar locais em um mapa (usando `st.map()`, Folium ou Pydeck)
-  * Exibir resultados de consultas de geoprocessamento, como locais a até uma distância especificada a partir de uma coordenada.
-
-## Tecnologias e Bibliotecas
-
-  * Python 3.10+ 
-  * Streamlit (interface) 
-  * SQLite3 (banco relacional) 
-  * PyMongo (integração com MongoDB) 
-  * Geopy (cálculo de distâncias) 
-  * Folium ou Pydeck (visualização de mapas) 
-  * Pandas (manipulação de dados) 
+- **dados.db**: É o arquivo do banco de dados SQLite, onde as informações de cidades e estados são armazenadas.
 
 
-## Como Executar
+```
+├── componentes/
+│   ├── form_cadastra_cidade.py
+│   ├── form_cadastra_local.py
+│   ├── proximidade_entre_locais.py
+│   └── visualiza_mapa.py
+├── .vscode/
+│   └── settings.json
+├── .gitignore
+├── app.py
+├── dados.db
+├── db_mongo.py
+├── db_sqlite.py
+├── geoprocessamento.py
+├── readme.md
+└── requirements.txt
+```
 
-1.  **Instale as dependências:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-2.  **Crie o arquivo `.env`** com a sua string de conexão do MongoDB:
-    ```
-    MONGO_URI="mongodb://<seu_usuario>:<sua_senha>@<seu_host>:<sua_porta>/?authSource=admin"
-    ```
-3.  **Execute a aplicação Streamlit:**
-    ```bash
-    streamlit run app.py
-    ```
 
+## Consultas ao SQLite
+### O módulo db_sqlite.py contém as funções para interagir com o banco de dados SQLite.
+
+1. Inserir uma nova cidade:
+A função inserir_cidade é chamada para adicionar uma nova cidade e seu estado à tabela cidades.
+
+```python
+def inserir_cidade(cidade, estado):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO cidades (cidade, estado) VALUES (?, ?)", (cidade, estado))
+    conn.commit()
+    conn.close()
+```
+2. Buscar cidades e estados cadastrados:
+A função buscar_cidades_e_estado consulta a tabela cidades para retornar todas as cidades e seus respectivos estados.
+
+```python
+def buscar_cidades_e_estado():
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT cidade, estado FROM cidades")
+    cidades_e_estados = cursor.fetchall()
+    conn.close()
+    return cidades_e_estados
+```
+## Consultas ao MongoDB
+### O módulo db_mongo.py gerencia a interação com a coleção de locais no MongoDB.
+
+1. Inserir um novo local:
+A função inserir_local insere um novo documento na coleção de locais, incluindo o nome, cidade, estado, coordenadas e descrição.
+
+```python
+def inserir_local(local_doc):
+    locais_collection = conectar_mongo()
+    if locais_collection is not None:
+        locais_collection.insert_one(local_doc)
+```
+2. Buscar todos os locais:
+A função buscar_locais é utilizada para recuperar todos os documentos da coleção.
+
+```python
+def buscar_locais():
+    locais_collection = conectar_mongo()
+    if locais_collection is not None:
+        return list(locais_collection.find())
+    return []
+```
+
+3. Buscar locais próximos (geoprocessamento):
+A funcionalidade de proximidade calcula a distância de cada local do MongoDB em relação a um ponto de origem, filtrando e exibindo aqueles que estão dentro de um raio especificado.
+
+```python
+locais_todos = buscar_locais() 
+coord_origem = {'latitude': lat_origem, 'longitude': lon_origem}
+
+for local in locais_todos:
+    if 'coordenadas' in local:
+        coord_local = local['coordenadas']
+        if all(isinstance(coord_local.get(k), (int, float)) for k in ['latitude', 'longitude']):
+            distancia = calcular_distancia_km(coord_origem, coord_local)
+            if distancia <= raio_km:
+                local['distancia_km'] = round(distancia, 2)
+                locais_proximos.append(local)
+```
 ## Prints de Funcionamento
 
 ### Cadastro de Cidades/Estados e Locais
