@@ -1,0 +1,7 @@
+Streamlit
+#SQLite3 ja contem no python
+PyMongo
+Geopy
+#Folium visualizacao de mapa ja contem no StreamLit
+python-dotenv
+Pandas
