@@ -1,3 +1,6 @@
+### Grupo:
+Luiz Henrique da Silva Araujo, Kauã Douglas, Pedro Henrique
+
 # Resumo da Arquitetura
 
 - **app.py**: Este é o arquivo principal que inicia a aplicação. Ele importa e executa os componentes da interface do Streamlit.
