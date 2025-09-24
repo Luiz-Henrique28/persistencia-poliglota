@@ -1,5 +1,5 @@
 ### Grupo:
-Luiz Henrique da Silva Araujo, Kauã Douglas, Pedro Henrique
+Luiz Henrique da Silva Araujo, Kauã Douglas, Pedro Henrique, Maria Clara Lau
 
 # Resumo da Arquitetura
 
